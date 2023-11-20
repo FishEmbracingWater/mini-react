@@ -42,6 +42,7 @@ function updateWorkInProgressHook() {
             memorizedState: null, // state effect
             next: null, // 下一个hook
         };
+
         if (workInProgressHook) {
             workInProgressHook = workInProgressHook.next = hook;
         } else {
