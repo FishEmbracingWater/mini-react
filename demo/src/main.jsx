@@ -12,7 +12,7 @@ import {
 
 import "./index.css";
 
-function FunctionComponent(props) {
+function FunctionHooksComponent(props) {
   const [count, setCount] = useReducer((x) => x + 1, 0);
   const [count2, setCount2] = useState(0);
 
@@ -57,6 +57,10 @@ function FunctionComponent(props) {
       </ul>
     </div>
   );
+}
+
+function FunctionComponent(props) {
+return <div>{props.name}</div>
 }
 
 class ClassComponent extends Component {
