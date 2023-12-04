@@ -1,2 +1,3 @@
 import Component from "./Component";
-export { Component };
+import { useReducer } from "./hooks";
+export { Component, useReducer };

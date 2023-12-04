@@ -17,7 +17,6 @@ function updateContainer(element, root) {
         type: containerInfo.nodeName.toLowerCase(),
         stateNode: containerInfo,
     });
-
     //组件初次渲染，需要创建DOM节点
     scheduleUpdateOnFiber(fiber);
 }

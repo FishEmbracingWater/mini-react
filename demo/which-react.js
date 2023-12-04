@@ -7,7 +7,8 @@
 // } from "react";
 // import ReactDOM from "react-dom";
 
-import { useReducer, useState, useEffect, useLayoutEffect } from "../src/react";
+import { useState, useEffect, useLayoutEffect } from "../src/react";
+import { useReducer } from "../myReact/hooks";
 import ReactDOM from "../myReact/ReactDom";
 import { Component } from "../myReact/react";
 export {

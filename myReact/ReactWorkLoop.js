@@ -12,7 +12,8 @@ import {
     HostComponent,
     HostText,
 } from "./ReactWorkTags";
-import { Placement } from "./utils";
+import { scheduleCallback } from "./scheduler";
+import { Placement, Update, updateNode } from "./utils";
 
 let wip = null; //work in progress 当前正在工作中的fiber
 let wipRoot = null; //根fiber
@@ -22,6 +23,7 @@ export function scheduleUpdateOnFiber(fiber) {
     console.log("scheduleUpdateOnFiber", fiber);
     wip = fiber;
     wipRoot = fiber;
+    scheduleCallback(workLoop);
 }
 
 function performUnitOfWork() {
@@ -68,8 +70,8 @@ function performUnitOfWork() {
     wip = null;
 }
 /**找到空闲时间，执行渲染 */
-function workLoop(IdleDeadline) {
-    while (wip && IdleDeadline.timeRemaining() > 1) {
+function workLoop() {
+    while (wip) {
         performUnitOfWork(); //执行工作单元
     }
     if (!wip && wipRoot) {
@@ -77,7 +79,7 @@ function workLoop(IdleDeadline) {
     }
 }
 
-requestIdleCallback(workLoop);
+// requestIdleCallback(workLoop);
 
 //提交更新
 function commitRoot() {
@@ -92,7 +94,13 @@ function commitWorker(wip) {
     const parentNode = getParentNode(wip.return); //wip.return.stateNode;
     const { flags, stateNode } = wip;
     if (flags & Placement && stateNode) {
+        //创建新节点
         parentNode.appendChild(stateNode);
+    }
+
+    if (flags & Update && stateNode) {
+        //更新属性
+        updateNode(stateNode, wip.alternate.props, wip.props);
     }
     //2.提交子元素
     commitWorker(wip.child);

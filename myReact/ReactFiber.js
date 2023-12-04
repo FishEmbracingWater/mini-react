@@ -18,6 +18,10 @@ export function createFiber(vnode, returnFiber) {
         return: returnFiber,
         flags: Placement, //当前fiber要进行的操作，二进制
         index: null, //记录节点在当前层级下的位置
+
+        alternate: null, //上一次的fiber,用于比较
+
+        memorizedState: null, //函数组件存储的第一个hook0
     };
     const { type } = vnode;
 
