@@ -20,7 +20,7 @@ let wipRoot = null; //根fiber
 
 /**初次渲染和更新 */
 export function scheduleUpdateOnFiber(fiber) {
-    console.log("scheduleUpdateOnFiber", fiber);
+    // console.log("scheduleUpdateOnFiber", fiber);
     wip = fiber;
     wipRoot = fiber;
     scheduleCallback(workLoop);
@@ -87,6 +87,21 @@ function commitRoot() {
     wipRoot = null;
 }
 
+function commitDeletions(deletions, parentNode) {
+    for (let index = 0; index < deletions.length; index++) {
+        parentNode.removeChild(getStateNode(deletions[index]));
+    }
+}
+
+//不是每个fiber都有dom节点，返回存在的stateNode
+function getStateNode(fiber) {
+    let tem = fiber;
+    while (!tem.stateNode) {
+        tem = tem.child;
+    }
+    return tem.stateNode;
+}
+
 function commitWorker(wip) {
     if (!wip) return;
     //1.提交自己
@@ -95,7 +110,13 @@ function commitWorker(wip) {
     const { flags, stateNode } = wip;
     if (flags & Placement && stateNode) {
         //创建新节点
-        parentNode.appendChild(stateNode);
+        const before = getHostSibling(wip.sibling);
+        insertOrAppendPlacementNode(stateNode, before, parentNode);
+        // parentNode.appendChild(stateNode);
+    }
+    if (wip.deletions) {
+        //删除wip的子节点
+        commitDeletions(wip.deletions, stateNode || parentNode);
     }
 
     if (flags & Update && stateNode) {
@@ -114,5 +135,24 @@ function getParentNode(wip) {
     while (tem) {
         if (tem.stateNode) return tem.stateNode;
         tem = tem.return;
+    }
+}
+
+function getHostSibling(sibling) {
+    while (sibling) {
+        if (sibling.stateNode && !(sibling.flags & Placement)) {
+            return sibling.stateNode;
+        }
+        sibling = sibling.sibling;
+    }
+    return null;
+}
+
+/**判断节点后面能不能插入 */
+function insertOrAppendPlacementNode(stateNode, before, parentNode) {
+    if (before) {
+        parentNode.insertBefore(stateNode, before);
+    } else {
+        parentNode.appendChild(stateNode);
     }
 }

@@ -37,7 +37,6 @@ function updateWorkInProgressHook() {
 
 /**每次渲染前，从WorkLoop中获取当前正在渲染的fiber */
 export function renderWithHooks(wip) {
-    console.log(wip);
     currentlyRenderingFiber = wip;
     currentlyRenderingFiber.memorizedState = null;
     workInProgressHook = null;
@@ -49,11 +48,24 @@ export function useReducer(redeucer, initalState) {
         //说明是第一次渲染
         hook.memorizedState = initalState;
     }
-    const dispatch = () => {
-        hook.memorizedState = redeucer(hook.memorizedState);
-        currentlyRenderingFiber.alternate = { ...currentlyRenderingFiber };
-        scheduleUpdateOnFiber(currentlyRenderingFiber);
-    };
+
+    const dispatch = dispatchReducerAction.bind(
+        null,
+        currentlyRenderingFiber,
+        hook,
+        redeucer
+    );
 
     return [hook.memorizedState, dispatch];
+}
+
+function dispatchReducerAction(fiber, hook, redeucer, action) {
+    hook.memorizedState = redeucer ? redeucer(hook.memorizedState) : action;
+    fiber.alternate = { ...fiber };
+    fiber.sibling = null;
+    scheduleUpdateOnFiber(fiber);
+}
+
+export function useState(initalState) {
+    return useReducer(null, initalState);
 }

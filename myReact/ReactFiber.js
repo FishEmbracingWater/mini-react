@@ -24,7 +24,6 @@ export function createFiber(vnode, returnFiber) {
         memorizedState: null, //函数组件存储的第一个hook0
     };
     const { type } = vnode;
-
     if (isStr(type)) {
         fiber.tag = HostComponent; //为string时是原生标签
     } else if (isFn(type)) {

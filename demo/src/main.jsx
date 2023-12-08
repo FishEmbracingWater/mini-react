@@ -61,15 +61,20 @@ function FunctionHooksComponent(props) {
 
 function FunctionComponent(props) {
     const [count, setCount] = useReducer((x) => x + 1, 0);
-    const [count1, setCount1] = useReducer((x) => x + 1, 0);
-    const [count2, setCount2] = useReducer((x) => x + 1, 0);
-    console.log(count);
+    const [count2, setCount2] = useState(0);
     return (
         <div>
             <div>{props.name}</div>
             <button onClick={() => setCount()}>{count}</button>
-            <button onClick={() => setCount1()}>{count1}</button>
-            <button onClick={() => setCount2()}>{count2}</button>
+            <button onClick={() => setCount2(count2 > 4 ? 2 : count2 + 1)}>
+                {count2}
+            </button>
+            {count2 % 2 ? <div>omg</div> : <span>123</span>}
+            <ul>
+                {[0, 1].map((item) => {
+                    return <li key={item}>{item}</li>;
+                })}
+            </ul>
         </div>
     );
 }
@@ -98,11 +103,12 @@ function FragmentComponent() {
 
 const jsx = (
     <div className="border">
-        <h1>react</h1>
-        <a href="https://github.com/bubucuo/mini-react">mini react</a>
+        {/* <h1>react</h1>
+        <a href="https://github.com/bubucuo/mini-react">mini react</a> */}
         <FunctionComponent name="函数组件" />
         {/* <ClassComponent name="类组件" /> */}
-        {/* <FragmentComponent /> */}
+        <FragmentComponent />
+        {/* <FunctionHooksComponent /> */}
     </div>
 );
 

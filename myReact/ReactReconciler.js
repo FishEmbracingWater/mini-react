@@ -1,6 +1,6 @@
-import { isStringOrNumber, Update, updateNode } from "./utils";
-import { createFiber } from "./ReactFiber";
+import { updateNode } from "./utils";
 import { renderWithHooks } from "./hooks";
+import { reconcileChildren } from "./ReactChildFiber";
 
 /**更新原生标签 */
 export function updateHostComponent(wip) {
@@ -15,6 +15,7 @@ export function updateHostComponent(wip) {
 /**更新函数组件 */
 export function updateFunctionComponent(wip) {
     renderWithHooks(wip);
+    console.log(wip);
     const { type, props } = wip;
     const children = type(props);
     reconcileChildren(wip, children);
@@ -36,48 +37,4 @@ export function updateFragmentComponent(wip) {
 /**更新文本节点 */
 export function updateHostTextComponent(wip) {
     wip.stateNode = document.createTextNode(wip.props.children); //创建文本节点，存到stateNode上
-}
-
-/**遍历更新子节点 协调（diff） */
-function reconcileChildren(wip, children) {
-    if (isStringOrNumber(children)) return;
-    const newChildren = Array.isArray(children) ? children : [children];
-    let oldFiber = wip.alternate?.child; //oldfiber的头节点
-    let previousNewFiber = null;
-    for (let i = 0; i < newChildren.length; i++) {
-        const newChild = newChildren[i];
-        if (newChild === null) continue;
-        const newFiber = createFiber(newChild, wip);
-        const same = sameNode(newFiber, oldFiber);
-
-        if (same) {
-            Object.assign(newFiber, {
-                stateNode: oldFiber.stateNode,
-                alternate: oldFiber,
-                flags: Update,
-            });
-        }
-        if (oldFiber) {
-            oldFiber = oldFiber.sibling;
-        }
-
-        if (previousNewFiber === null) {
-            //为null时表示头结点
-            wip.child = newFiber;
-        } else {
-            previousNewFiber.sibling = newFiber;
-        }
-
-        previousNewFiber = newFiber;
-    }
-}
-
-/**节点复用的条件  1.同一层级下 2.同一类型 3.key相同 */
-function sameNode(oldFiber, newChild) {
-    return (
-        oldFiber &&
-        newChild &&
-        oldFiber.type === newChild.type &&
-        oldFiber.key === newChild.key
-    );
 }
