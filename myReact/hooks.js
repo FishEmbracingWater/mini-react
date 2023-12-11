@@ -1,7 +1,10 @@
 import { scheduleUpdateOnFiber } from "./ReactWorkLoop";
+import { areHookInputsEqual, HookLayout, HookPassive } from "./utils";
 
 let currentlyRenderingFiber = null; //当前正在渲染的fiber
 let workInProgressHook = null; //当前正在工作的hook
+
+let currentHook = null; //老hook
 
 /**获取当前正在工作的hook */
 function updateWorkInProgressHook() {
@@ -14,12 +17,16 @@ function updateWorkInProgressHook() {
         if (workInProgressHook) {
             //说明不是第一个hook
             workInProgressHook = hook = workInProgressHook.next;
+            currentHook = currentHook.next;
         } else {
             //hook0
             workInProgressHook = hook = currentlyRenderingFiber.memorizedState;
+            currentHook = current.memorizedState;
         }
     } else {
         //组件初次渲染
+        currentHook = null;
+
         hook = {
             memorizedState: null, //state
             next: null, //下一个hook
@@ -40,6 +47,9 @@ export function renderWithHooks(wip) {
     currentlyRenderingFiber = wip;
     currentlyRenderingFiber.memorizedState = null;
     workInProgressHook = null;
+
+    currentlyRenderingFiber.updateQueueOfEffect = []; //源码中这块使用的是链表，这里简化了，分成了2个数组
+    currentlyRenderingFiber.updateQueueOfLayout = [];
 }
 
 export function useReducer(redeucer, initalState) {
@@ -68,4 +78,34 @@ function dispatchReducerAction(fiber, hook, redeucer, action) {
 
 export function useState(initalState) {
     return useReducer(null, initalState);
+}
+
+function updateEffectImp(HookFlags, crate, deps) {
+    const hook = updateWorkInProgressHook();
+
+    if (currentHook) {
+        const prevEffect = currentHook.memorizedState;
+        if (deps) {
+            const prevDeps = prevEffect.deps;
+            if (areHookInputsEqual(deps, prevDeps)) {
+                return;
+            }
+        }
+    }
+
+    const effect = { HookFlags, crate, deps };
+    hook.memorizedState = effect;
+    if (HookFlags & HookPassive) {
+        currentlyRenderingFiber.updateQueueOfEffect.push(effect);
+    } else if (HookFlags & HookLayout) {
+        currentlyRenderingFiber.updateQueueOfLayout.push(effect);
+    }
+}
+
+export function useEffect(crate, deps) {
+    return updateEffectImp(HookPassive, crate, deps);
+}
+
+export function useLayoutEffect(crate, deps) {
+    return updateEffectImp(HookLayout, crate, deps);
 }

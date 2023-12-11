@@ -53,7 +53,7 @@ function siftDown(heap, node, i) {
     let index = i;
     const len = heap.length;
     const halfLen = len >> 1;
-    console.log("halfLen", halfLen, len); //sy-log
+
     while (index < halfLen) {
         const leftIndex = (index + 1) * 2 - 1;
         const rightIndex = leftIndex + 1;

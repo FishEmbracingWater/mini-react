@@ -62,6 +62,14 @@ function FunctionHooksComponent(props) {
 function FunctionComponent(props) {
     const [count, setCount] = useReducer((x) => x + 1, 0);
     const [count2, setCount2] = useState(0);
+
+    useEffect(() => {
+        console.log("useEffect", count);
+    }, [count]);
+
+    useLayoutEffect(() => {
+        console.log("useLayoutEffect");
+    }, []);
     return (
         <div>
             <div>{props.name}</div>

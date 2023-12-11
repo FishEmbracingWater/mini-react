@@ -123,6 +123,11 @@ function commitWorker(wip) {
         //更新属性
         updateNode(stateNode, wip.alternate.props, wip.props);
     }
+
+    if (wip.tag === FunctionComponent) {
+        invokeHooks(wip);
+    }
+
     //2.提交子元素
     commitWorker(wip.child);
     //3.提交兄弟元素
@@ -154,5 +159,22 @@ function insertOrAppendPlacementNode(stateNode, before, parentNode) {
         parentNode.insertBefore(stateNode, before);
     } else {
         parentNode.appendChild(stateNode);
+    }
+}
+
+function invokeHooks(wip) {
+    const { updateQueueOfEffect, updateQueueOfLayout } = wip;
+    console.log("invokeHooks", updateQueueOfEffect, updateQueueOfLayout);
+    for (let index = 0; index < updateQueueOfLayout.length; index++) {
+        const effect = updateQueueOfLayout[index];
+        effect.crate();
+    }
+
+    for (let index = 0; index < updateQueueOfEffect.length; index++) {
+        const effect = updateQueueOfEffect[index];
+
+        scheduleCallback(() => {
+            effect.crate();
+        });
     }
 }

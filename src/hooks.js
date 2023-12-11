@@ -62,20 +62,6 @@ export function useReducer(reducer, initalState) {
         hook.memorizedState = initalState;
     }
 
-    //   let dispatch = store.dispatch;
-    //   const midApi = {
-    //     getState: store.getState(),
-    //     // dispatch,
-    //     dispatch: (action, ...args) => dispatch(action, ...args),
-    //   };
-    //   dispatch
-    //   const dispatch = () => {
-    //     hook.memorizedState = reducer(hook.memorizedState);
-    //     currentlyRenderingFiber.alternate = { ...currentlyRenderingFiber };
-    //     scheduleUpdateOnFiber(currentlyRenderingFiber);
-    //     console.log("log"); //sy-log
-    //   };
-
     const dispatch = dispatchReducerAction.bind(
         null,
         currentlyRenderingFiber,
