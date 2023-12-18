@@ -36,6 +36,10 @@ export function isUndefined(s) {
     return s === undefined;
 }
 
+export function isObject(s) {
+    return Object.prototype.toString.call(s) === "[object Object]";
+}
+
 export function updateNode(node, prevVal, nextVal) {
     Object.keys(prevVal)
         // .filter(k => k !== "children")

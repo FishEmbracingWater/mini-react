@@ -1,18 +1,35 @@
 import { peek, push, pop } from "./minHeap";
+import { isObject } from "../utils";
+import { getTimeoutByPriorityLevel } from "./SchedulerPriorities";
 
 let taskQuene = [];
+let timerQuene = [];
 let taskIdCounter = 1;
 
-/**调度任务 */
-export function scheduleCallback(callback) {
+/**调度任务
+ * @param options {delay:number}
+ */
+export function scheduleCallback(callback, priorityLevel, options) {
     const currentTime = getCurrntTime();
-    const timeout = -1;
-    const expirtationTime = currentTime + timeout;
+    let startTime;
+
+    if (isObject(options) && options !== null) {
+        let delay = options?.delay;
+        if (typeof delay === "number" && delay > 0) {
+            startTime = currentTime + delay;
+        } else {
+            startTime = currentTime;
+        }
+    }
+    let timeout = getTimeoutByPriorityLevel(priorityLevel);
+    const expirtationTime = startTime + timeout;
 
     const newTask = {
         id: taskIdCounter++,
         callback,
-        expirtationTime,
+        priorityLevel, //调度器优先级
+        startTime, //任务进入调度器的理论时间
+        expirtationTime, //过期时间
         sortIndex: expirtationTime,
     };
 
