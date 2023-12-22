@@ -17,7 +17,6 @@ import {
 // } from "../which-react";
 
 import "./index.css";
-import { createForm } from "@formily/core";
 
 import {
     // FormItem,
@@ -27,6 +26,7 @@ import {
     // Submit,
 } from "@formily/antd";
 import {
+    createForm,
     FormProvider,
     FormConsumer,
     Field,
@@ -111,7 +111,7 @@ function FunctionComponent(props) {
 }
 
 function FormlyComponent() {
-    const form = createForm();
+    const form = createForm({ initialValues: { input: "123" } });
     return (
         <FormProvider form={form}>
             <FormLayout layout="vertical">

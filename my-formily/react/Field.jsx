@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { FieldContext, FormContext } from "./FieldContext";
 import { observer } from "../../demo/watch-formily";
-
+//组件层的field
 const Field = observer((props) => {
     const form = useContext(FormContext);
     const field = form.createField(props);
