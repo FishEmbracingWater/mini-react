@@ -18,14 +18,22 @@ import {
 
 import "./index.css";
 import { createForm } from "@formily/core";
-import { FormProvider, FormConsumer, Field } from "@formily/react";
+
 import {
-    FormItem,
+    // FormItem,
     FormLayout,
-    Input,
+    // Input,
     FormButtonGroup,
-    Submit,
+    // Submit,
 } from "@formily/antd";
+import {
+    FormProvider,
+    FormConsumer,
+    Field,
+    FormItem,
+    Input,
+    Submit,
+} from "../watch-formily";
 
 function FunctionHooksComponent(props) {
     const [count, setCount] = useReducer((x) => x + 1, 0);
