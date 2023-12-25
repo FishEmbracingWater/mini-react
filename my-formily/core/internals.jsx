@@ -25,7 +25,6 @@ export const creatReactions = (field) => {
 
 export const batchValidate = async (target) => {
     target.errors = [];
-    let i = 0;
     for (const key in target.fields) {
         const field = target.fields[key];
 
