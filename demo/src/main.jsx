@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useRef } from "react";
 import ReactDOM from "react-dom/client";
 import {
     Component,
@@ -16,15 +16,10 @@ import {
 //     useLayoutEffect,
 // } from "../which-react";
 
+import store from "./store";
 import "./index.css";
 
-import {
-    // FormItem,
-    FormLayout,
-    // Input,
-    FormButtonGroup,
-    // Submit,
-} from "@formily/antd";
+import { FormLayout, FormButtonGroup } from "@formily/antd";
 import {
     createForm,
     FormProvider,
@@ -34,6 +29,13 @@ import {
     Input,
     Submit,
 } from "../watch-formily";
+import {
+    bindActionCreators,
+    Provider,
+    useSelector,
+    useDispatch,
+    connect,
+} from "../watch-redux";
 
 function FunctionHooksComponent(props) {
     const [count, setCount] = useReducer((x) => x + 1, 0);
@@ -113,34 +115,125 @@ function FunctionComponent(props) {
 function FormlyComponent() {
     const form = createForm({ initialValues: { input: "123" } });
     return (
-        <FormProvider form={form}>
-            <FormLayout layout="vertical">
-                <Field
-                    name="input"
-                    title="输入框"
-                    required
-                    initialValue="Hello world"
-                    decorator={[FormItem]}
-                    component={[Input]}
-                />
-            </FormLayout>
-            <FormConsumer>
-                {() => (
-                    <div
-                        style={{
-                            marginBottom: 20,
-                            padding: 5,
-                            border: "1px dashed #666",
-                        }}
-                    >
-                        实时响应：{form.values.input}
-                    </div>
-                )}
-            </FormConsumer>
-            <FormButtonGroup>
-                <Submit onSubmit={console.log}>提交</Submit>
-            </FormButtonGroup>
-        </FormProvider>
+        <>
+            <div>Formly</div>
+            <FormProvider form={form}>
+                <FormLayout layout="vertical">
+                    <Field
+                        name="input"
+                        title="输入框"
+                        required
+                        initialValue="Hello world"
+                        decorator={[FormItem]}
+                        component={[Input]}
+                    />
+                </FormLayout>
+                <FormConsumer>
+                    {() => (
+                        <div
+                            style={{
+                                marginBottom: 20,
+                                padding: 5,
+                                border: "1px dashed #666",
+                            }}
+                        >
+                            实时响应：{form.values.input}
+                        </div>
+                    )}
+                </FormConsumer>
+                <FormButtonGroup>
+                    <Submit onSubmit={console.log}>提交</Submit>
+                </FormButtonGroup>
+            </FormProvider>
+        </>
+    );
+}
+
+function ReduxComponent() {
+    const [, forceUpdate] = useReducer((x) => x + 1, 0);
+    const unsubscribe = useRef(null);
+    useEffect(() => {
+        unsubscribe.current = store.subscribe(() => forceUpdate());
+    }, [store.getState()]);
+    const getUnsubscribe = () => {
+        unsubscribe.current();
+    };
+    useEffect(() => {
+        return () => getUnsubscribe();
+    }, []);
+    return (
+        <div className="border">
+            <h3>redux</h3>
+            <p>{store.getState().count}</p>
+            <button onClick={() => store.dispatch({ type: "add" })}>+1</button>
+            <button
+                onClick={() =>
+                    // setTimeout(() => {
+                    //     store.dispatch({ type: "minus" });
+                    // }, 1000)
+                    store.dispatch((dispatch, getState) => {
+                        setTimeout(() => {
+                            dispatch({ type: "minus" });
+                        }, 1000);
+                    })
+                }
+            >
+                -1
+            </button>
+            <button
+                onClick={() => {
+                    store.dispatch(
+                        Promise.resolve({ type: "add", payload: 1000 })
+                    );
+                }}
+            >
+                promise +1
+            </button>
+        </div>
+    );
+}
+
+const ReactReduxComponent = connect(
+    // mapStateToProps,
+    // (state) => {
+    //     return state;
+    // }
+    ({ ReactReduxCount }) => ({ ReactReduxCount }),
+    // mapDispatchToProps
+    // (dispatch) => {
+    //     let creators = {
+    //         add: () => ({ type: "add" }),
+    //         minus: () => ({ type: "minus" }),
+    //     };
+    //     creators = bindActionCreators(creators, dispatch);
+    //     return { dispatch, ...creators };
+    // }
+    {
+        add: () => ({ type: "add" }),
+        minus: () => ({ type: "minus" }),
+    }
+)((props) => {
+    const { ReactReduxCount, dispatch, add, minus } = props;
+    return (
+        <div className="border">
+            <h3>react-redux</h3>
+            <p>{ReactReduxCount}</p>
+            <button onClick={() => add(1)}>+1</button>
+            <button onClick={() => minus()}>-1</button>
+        </div>
+    );
+});
+
+function ReactReduxHookComent() {
+    const count = useSelector(({ count }) => count);
+    const dispatch = useDispatch();
+    return (
+        <div className="border">
+            <h3>react-redux-hook</h3>
+            <p>{count}</p>
+            <button onClick={() => dispatch({ type: "add" })}>+1</button>
+            <button onClick={() => dispatch({ type: "minus" })}>-1</button>
+        </div>
     );
 }
 class ClassComponent extends Component {
@@ -170,6 +263,9 @@ const jsx = (
         {/* <h1>react</h1>
         <a href="https://github.com/bubucuo/mini-react">mini react</a> */}
         <FunctionComponent name="函数组件" />
+        <ReduxComponent />
+        <ReactReduxComponent />
+        <ReactReduxHookComent />
         <FormlyComponent />
         {/* <ClassComponent name="类组件" /> */}
         <FragmentComponent />
@@ -177,7 +273,9 @@ const jsx = (
     </div>
 );
 
-ReactDOM.createRoot(document.getElementById("root")).render(jsx);
+ReactDOM.createRoot(document.getElementById("root")).render(
+    <Provider store={store}>{jsx}</Provider>
+);
 
 // 实现了常见组件初次渲染
 

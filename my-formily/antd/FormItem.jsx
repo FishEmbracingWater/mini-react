@@ -1,10 +1,9 @@
 import { FieldContext, observer } from "../../demo/watch-formily";
 
-import React, { useState, useEffect, useContext } from "react";
+import React, { useContext } from "react";
 
 const FromItem = observer(({ children }) => {
     const field = useContext(FieldContext);
-    console.log("field", field);
     return (
         <div>
             <div>{field.title}</div>
