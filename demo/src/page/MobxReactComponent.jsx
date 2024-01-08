@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
 import count from "../mobxStore";
 import todoStore from "../mobxStore/TodoStore";
-import { observer } from "../../watch-mobx";
+import { Observer, observer } from "../../watch-mobx";
 
 function MobxReactComponebt(props) {
+    console.log("MobxReactComponebt render");
     return (
         <div className="border">
             <h3>mobx-react</h3>
-            <button onClick={() => count.add()}>{count.num}</button>
+            <Observer>
+                {() => <button onClick={() => count.add()}>{count.num}</button>}
+            </Observer>
+
             {todoStore.todoList.map((todo, index) => (
                 <TodoView key={index} todo={todo} index={index} />
             ))}

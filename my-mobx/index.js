@@ -1,2 +1,3 @@
 import observer from "./observer";
-export { observer };
+import Observer from "./ObserverComponent";
+export { Observer, observer };
