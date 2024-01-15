@@ -6,7 +6,6 @@ interface IObserverProps {
     render?: () => React.ReactElement | null;
 }
 function Observer({ children, render }: IObserverProps) {
-    console.log("Observer", children, render);
     const component = children || render;
     if (typeof component !== "function") return null;
 
