@@ -20,6 +20,7 @@ import {
     useDispatch,
     connect,
 } from "../watch-redux";
+import RouteComponent from "./page/RouteComponent";
 import ReactComponent from "./page/ReactCompontent";
 import FormlyComponent from "./page/FormlyComponent";
 import MobxReactComponent from "./page/MobxReactComponent";
@@ -116,12 +117,13 @@ const jsx = (
     <div className="border">
         {/* <h1>react</h1>
         <a href="https://github.com/bubucuo/mini-react">mini react</a> */}
-        <MobxReactComponent />
-        <ReactComponent />
-        <ReduxComponent />
-        <ReactReduxComponent />
-        <ReactReduxHookComent />
-        <FormlyComponent />
+        <RouteComponent />
+        {/* <MobxReactComponent /> */}
+        {/* <ReactComponent /> */}
+        {/* <ReduxComponent /> */}
+        {/* <ReactReduxComponent /> */}
+        {/* <ReactReduxHookComent /> */}
+        {/* <FormlyComponent /> */}
     </div>
 );
 
