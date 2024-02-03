@@ -14,7 +14,7 @@ export function updateHostComponent(wip) {
     }
 
     //到目前为止，当前fiber节点对应的stateNode 已经有值了，也就是真实的dom节点
-    //接下来需要处理它的子节点
+    //接下来需要处理它的子节点，只是一层子节点的处理
     reconcileChildren(wip, wip.props.children); //更新当前wip的子节点，添加到wip.child上
     //上一步执行完毕后，说明已经处理完所有的子节点vnode，fiber的链表也已经形成
 }
