@@ -16,6 +16,22 @@ export function scheduleUpdateOnFiber(fiber) {
 }
 
 /**
+ * 找到每一帧的空闲时间，执行渲染
+ *  */
+function workLoop(deadline) {
+    while (wip && deadline.timeRemaining() > 0) {
+        //进入此循环、说明有需要进行处理的fiber节点，并且也有时间执行
+        performUnitOfWork(); //该方法负责处理fiber节点
+    }
+    //来到这里，说明要么没有时间了，要么fiber树处理完了
+    if (!wip && wipRoot) {
+        //说明整个fiber树处理完了
+        //将wipRoot提交到dom上
+        commitRoot();
+    }
+}
+
+/**
  * 该函数负责处理fiber节点
  * 总共要做的事情：
  * 1.处理当前的fiber对象
@@ -55,21 +71,7 @@ function performUnitOfWork() {
     //如果执行到这里、说明所有节点都已经处理完了
     wip = null;
 }
-/**
- * 找到每一帧的空闲时间，执行渲染
- *  */
-function workLoop(deadline) {
-    while (wip && deadline.timeRemaining() > 0) {
-        //进入此循环、说明有需要进行处理的fiber节点，并且也有时间执行
-        performUnitOfWork(); //该方法负责处理fiber节点
-    }
-    //来到这里，说明要么没有时间了，要么fiber树处理完了
-    if (!wip && wipRoot) {
-        //说明整个fiber树处理完了
-        //将wipRoot提交到dom上
-        commitRoot();
-    }
-}
+
 
 // requestIdleCallback(workLoop);
 

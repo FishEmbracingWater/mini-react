@@ -18,8 +18,13 @@ function deleteRemainChildren(returnFiber, currentFirstChild) {
     }
 }
 
-/*对于初次渲染、只是记录下标
+/** 
+*对于初次渲染、只是记录下标
  *更新，检查节点是否移动
+ * @param {*} newFiber 上面刚刚创建的新的fiber 对象
+ * @param {*} lastPlaceIndex 上一次插入的最远位置, 也就是上一次插入的最远位置，初始值为0
+ * @param {*} newIndex 当前节点的下标，初始值为0
+ * @param {*} shouldTrackSideEffects 用于判断 returnFiber 是初次渲染还是更新
  */
 function placeChild(
     newFiber,
@@ -27,9 +32,11 @@ function placeChild(
     newIndex,
     shouldTrackSideEffects
 ) {
+    //更新fiber对象上的index
+    //fiber 对象上的index,用来记录节点在当前层级下的位置
     newFiber.index = newIndex;
     if (!shouldTrackSideEffects) {
-        //初次渲染
+        //进入此if，说明是初次渲染,那么不需要记录节点的位置
         return lastPlaceIndex;
     }
 
@@ -75,20 +82,29 @@ function mapRemainingChildren(currentFirstChild) {
  * @param children 子节点的vnode
  */
 export function reconcileChildren(returnFiber, children) {
+    //如果children是字符串或者数字，那么说明这是一个文本节点
+    //文本节点在 updateNode 中已经处理过了，这里不需要再处理
     if (isStringOrNumber(children)) return;
+    //准备工作
+    //如果只有一个子节点，那么children是一个vnode对象
+    //如果有多个子节点，那么children是一个vnode数组
+    //所以这一步是将children统一转换成数组
     const newChildren = Array.isArray(children) ? children : [children];
+    let previousNewFiber = null; //上一次fiber
     let oldFiber = returnFiber.alternate?.child; //oldfiber的头节点
+    let newIndex = 0;//记录children 数组的索引(下标)
+    let lastPlaceIndex = 0;  //上一次dom节点插入的最远位置
+
     //下一个oldFider | 暂时缓存oldFiber
     let nextOldFiber = null;
     //用于判断是初次渲染还是更新,通过父节点的老节点来判断
-    let shouldTrackSideEffects = !!returnFiber.alternate;
-    let previousNewFiber = null; //上一次fiber
-    let newIndex = 0;
-    //上一次dom节点插入的最远位置
-    let lastPlaceIndex = 0;
-    //遍历新节点
+    //true 代表是更新，false 代表是初次渲染
+    let shouldTrackSideEffects = !!returnFiber.alternate;//是否需要追踪副作用
+
+    //第一轮遍历，尝试复用节点
     // *1.从左往右遍历，比较新老节点，如果节点可以复用，继续往右，否则就停止
     for (; oldFiber && newIndex < newChildren.length; newIndex++) {
+        //第一次不会进入这里，因为一开始的oldFiber是null
         const newChild = newChildren[newIndex];
         if (newChild == null) {
             continue;
@@ -134,9 +150,13 @@ export function reconcileChildren(returnFiber, children) {
         oldFiber = nextOldFiber;
     }
 
-    // *2.新节点没了，老节点还有，删除老节点
+    // *2.新节点遍历没了，老节点还有，删除老节点
+    //从上面的for循环中退出，有以下2种情况
+    // 1. oldFiber 为 null ，说明是初次渲染
+    // 2. newIndex === newChildren.length ，说明是更新
     //如果新节点遍历完了，但是（多个）老节点还有，（多个）老节点要被删除
     if (newIndex === newChildren.length) {
+        //如果还剩余有旧的fiber节点，那么就要删除
         deleteRemainChildren(returnFiber, oldFiber);
         return;
     }
@@ -145,25 +165,32 @@ export function reconcileChildren(returnFiber, children) {
     // 1)初次渲染
     // 2)老节点没了，新节点还有
     if (!oldFiber) {
+        //说明是初次渲染
+        //需要将newChildren 数组中的每一个元素都生成一个fiber 对象
+        //然后将这些fiber 对象串联起来
         for (; newIndex < newChildren.length; newIndex++) {
             const newChild = newChildren[newIndex];
+            //如果新节点是null，不做处理直接跳过
             if (newChild === null) continue;
+            // 下一步根据 vnode 生产新的fiber对象
             const newFiber = createFiber(newChild, returnFiber);
-
+            //接下来更新 lastPlaceIndex
             lastPlaceIndex = placeChild(
                 newFiber,
                 lastPlaceIndex,
                 newIndex,
                 shouldTrackSideEffects
             );
-
+            //接下来要将新生成的fiber 加入到fiber 链表里面去
             if (previousNewFiber === null) {
-                //为null时表示头结点
+                //说明是第一个子节点
                 returnFiber.child = newFiber;
             } else {
+                //进入此分支,说明当前生成的fiber节点并非父fiber 的第一个子节点
                 previousNewFiber.sibling = newFiber;
             }
-
+            //将previousNewFiber设置为newFiber 
+            //从而将当前fiber更新为上一个fiber
             previousNewFiber = newFiber;
         }
     }
