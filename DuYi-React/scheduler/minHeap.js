@@ -1,27 +1,26 @@
-// 返回最小堆堆顶元素
+/**返回最小堆堆顶元素 */
 export function peek(heap) {
     return heap.length === 0 ? null : heap[0];
 }
 
-// 往最小堆中插入元素
-// 1. 把node插入数组尾部
-// 2. 往上调整最小堆
+/**往堆中插入一个元素
+ * 1.将元素插入到堆的末尾
+ * 2.往上调整最小堆，将元素与父节点比较，如果比父节点小，则交换位置
+ */
 export function push(heap, node) {
-    let index = heap.length;
+    const index = heap.length;
     heap.push(node);
     siftUp(heap, node, index);
 }
 
-//这个函数实现了最小堆的 siftUp 操作，用于在插入节点后保持堆的性质。
-//它通过比较节点与父节点的值，如果节点小于父节点，则交换它们的位置，直到满足最小堆的条件。
+/**往上调整最小堆 */
 function siftUp(heap, node, i) {
     let index = i;
-
     while (index > 0) {
         const parentIndex = (index - 1) >> 1;
         const parent = heap[parentIndex];
         if (compare(parent, node) > 0) {
-            // parent>node， 不符合最小堆条件
+            //parent>node 不符合最小堆的定义，需要交换位置
             heap[parentIndex] = node;
             heap[index] = parent;
             index = parentIndex;
@@ -31,28 +30,30 @@ function siftUp(heap, node, i) {
     }
 }
 
-// 删除堆顶元素
-// 1. 最后一个元素覆盖堆顶
-// 2. 向下调整
+/**删除堆顶元素
+ * 1.最后一个元素覆盖堆顶
+ * 2.往下调整最小堆，将元素与子节点比较，如果比子节点大，则交换位置
+ */
 export function pop(heap) {
     if (heap.length === 0) {
         return null;
     }
-    const fisrt = heap[0];
+    const first = heap[0];
     const last = heap.pop();
-
-    if (fisrt !== last) {
+    if (first !== last) {
+        //因为最小堆里的都是对象，当两个对象相同时，就是同一个地址
         heap[0] = last;
         siftDown(heap, last, 0);
     }
-
-    return fisrt;
+    return first;
 }
 
+/**向下调整 */
 function siftDown(heap, node, i) {
     let index = i;
     const len = heap.length;
     const halfLen = len >> 1;
+
     while (index < halfLen) {
         const leftIndex = (index + 1) * 2 - 1;
         const rightIndex = leftIndex + 1;
@@ -60,35 +61,34 @@ function siftDown(heap, node, i) {
         const right = heap[rightIndex];
 
         if (compare(left, node) < 0) {
-            // left < node,
-            // ? left、right
+            //left < nodex
+            //? left、right比较
             if (rightIndex < len && compare(right, left) < 0) {
-                // right 最小， 交换right和parent
+                //right 最小，交换right和parent
                 heap[index] = right;
                 heap[rightIndex] = node;
                 index = rightIndex;
             } else {
-                // 没有right或者left<right
-                // 交换left和parent
+                //没有right或者left <left
+                //交换left和parent
                 heap[index] = left;
                 heap[leftIndex] = node;
                 index = leftIndex;
             }
         } else if (rightIndex < len && compare(right, node) < 0) {
-            // right 最小， 交换right和parent
+            //right 最小，交换right 和parent
             heap[index] = right;
             heap[rightIndex] = node;
             index = rightIndex;
         } else {
-            // parent最小
+            // parent 最小
             return;
         }
     }
 }
 
 function compare(a, b) {
-    //   return a - b;
-    const diff = a.sortIndex - b.sortIndex;
+    const diff = a.sortTime - b.sortTime;
     return diff !== 0 ? diff : a.id - b.id;
 }
 
@@ -97,9 +97,9 @@ function compare(a, b) {
 // push(a, 8);
 
 // while (1) {
-//   if (a.length === 0) {
-//     break;
-//   }
-//   console.log("a", peek(a)); //sy-log
-//   pop(a);
+//     if (a.length === 0) {
+//         break;
+//     }
+//     console.log("a", peek(a)); //sy-log
+//     pop(a);
 // }

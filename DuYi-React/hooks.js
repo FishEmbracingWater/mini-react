@@ -1,64 +1,61 @@
-import { scheduleUpdateOnFiber } from "./ReactFiberWorkLoop";
+import { scheduleUpdateOnFiber } from "./ReactWorkLoop";
 import { areHookInputsEqual, HookLayout, HookPassive } from "./utils";
 
-let currentlyRenderingFiber = null;
-let workInProgressHook = null;
+let currentlyRenderingFiber = null; //当前正在渲染的fiber
+let workInProgressHook = null; //当前正在工作的hook
 
-// 老hook
-let currentHook = null;
+let currentHook = null; //老hook
 
+/**获取当前正在工作的hook */
+function updateWorkInProgressHook() {
+    let hook;
+
+    const current = currentlyRenderingFiber.alternate; //老的，上一次的fiber
+    if (current) {
+        //组件更新
+        currentlyRenderingFiber.memorizedState = current.memorizedState;
+        if (workInProgressHook) {
+            //说明不是第一个hook
+            workInProgressHook = hook = workInProgressHook.next;
+            currentHook = currentHook.next;
+        } else {
+            //hook0
+            workInProgressHook = hook = currentlyRenderingFiber.memorizedState;
+            currentHook = current.memorizedState;
+        }
+    } else {
+        //组件初次渲染
+        currentHook = null;
+
+        hook = {
+            memorizedState: null, //state
+            next: null, //下一个hook
+        };
+        if (workInProgressHook) {
+            //说明不是第一个hook
+            workInProgressHook = workInProgressHook.next = hook;
+        } else {
+            //说明是第一个hook
+            workInProgressHook = currentlyRenderingFiber.memorizedState = hook;
+        }
+    }
+    return hook;
+}
+
+/**每次渲染前，从WorkLoop中获取当前正在渲染的fiber */
 export function renderWithHooks(wip) {
     currentlyRenderingFiber = wip;
     currentlyRenderingFiber.memorizedState = null;
     workInProgressHook = null;
 
-    // 为了方便，useEffect与useLayoutEffect区分开，并且以数组管理
-    // 源码中是放一起的，并且是个链表
-    currentlyRenderingFiber.updateQueueOfEffect = [];
+    currentlyRenderingFiber.updateQueueOfEffect = []; //源码中这块使用的是链表，这里简化了，分成了2个数组
     currentlyRenderingFiber.updateQueueOfLayout = [];
 }
 
-function updateWorkInProgressHook() {
-    let hook;
-
-    const current = currentlyRenderingFiber.alternate;
-    if (current) {
-        // 组件更新
-        currentlyRenderingFiber.memorizedState = current.memorizedState;
-        if (workInProgressHook) {
-            workInProgressHook = hook = workInProgressHook.next;
-            currentHook = currentHook.next;
-        } else {
-            // hook0
-
-            workInProgressHook = hook = currentlyRenderingFiber.memorizedState;
-            currentHook = current.memorizedState;
-        }
-    } else {
-        // 组件初次渲染
-        currentHook = null;
-
-        hook = {
-            memorizedState: null, // state effect
-            next: null, // 下一个hook
-        };
-
-        if (workInProgressHook) {
-            workInProgressHook = workInProgressHook.next = hook;
-        } else {
-            // hook0
-            workInProgressHook = currentlyRenderingFiber.memorizedState = hook;
-        }
-    }
-
-    return hook;
-}
-
-export function useReducer(reducer, initalState) {
+export function useReducer(redeucer, initalState) {
     const hook = updateWorkInProgressHook();
-
     if (!currentlyRenderingFiber.alternate) {
-        // 初次渲染
+        //说明是第一次渲染
         hook.memorizedState = initalState;
     }
 
@@ -66,14 +63,14 @@ export function useReducer(reducer, initalState) {
         null,
         currentlyRenderingFiber,
         hook,
-        reducer
+        redeucer
     );
 
     return [hook.memorizedState, dispatch];
 }
 
-function dispatchReducerAction(fiber, hook, reducer, action) {
-    hook.memorizedState = reducer ? reducer(hook.memorizedState) : action;
+function dispatchReducerAction(fiber, hook, redeucer, action) {
+    hook.memorizedState = redeucer ? redeucer(hook.memorizedState) : action;
     fiber.alternate = { ...fiber };
     fiber.sibling = null;
     scheduleUpdateOnFiber(fiber);
@@ -83,7 +80,7 @@ export function useState(initalState) {
     return useReducer(null, initalState);
 }
 
-function updateEffectImp(hooksFlags, create, deps) {
+function updateEffectImp(HookFlags, crate, deps) {
     const hook = updateWorkInProgressHook();
 
     if (currentHook) {
@@ -96,21 +93,19 @@ function updateEffectImp(hooksFlags, create, deps) {
         }
     }
 
-    const effect = { hooksFlags, create, deps };
-
+    const effect = { HookFlags, crate, deps };
     hook.memorizedState = effect;
-
-    if (hooksFlags & HookPassive) {
+    if (HookFlags & HookPassive) {
         currentlyRenderingFiber.updateQueueOfEffect.push(effect);
-    } else if (hooksFlags & HookLayout) {
+    } else if (HookFlags & HookLayout) {
         currentlyRenderingFiber.updateQueueOfLayout.push(effect);
     }
 }
 
-export function useEffect(create, deps) {
-    return updateEffectImp(HookPassive, create, deps);
+export function useEffect(crate, deps) {
+    return updateEffectImp(HookPassive, crate, deps);
 }
 
-export function useLayoutEffect(create, deps) {
-    return updateEffectImp(HookLayout, create, deps);
+export function useLayoutEffect(crate, deps) {
+    return updateEffectImp(HookLayout, crate, deps);
 }
