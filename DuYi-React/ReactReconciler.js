@@ -21,17 +21,23 @@ export function updateHostComponent(wip) {
 
 /**更新函数组件 */
 export function updateFunctionComponent(wip) {
+    //在处理fiber之前，先处理hooks
     renderWithHooks(wip);
-    console.log(wip);
     const { type, props } = wip;
+    //这里从当前wip 上面获取到的type是一个函数
+    //那么执行这个函数，获取返回值
     const children = type(props);
+    //有了 vnode 节点之后，调用reconcileChildren 处理子节点
     reconcileChildren(wip, children);
 }
 
 /**更新类组件 */
 export function updateClassComponent(wip) {
     const { type, props } = wip;
+    //这里从当前的wip上面获取到的type是一个类
+    //实例化这个类
     const instance = new type(props);
+    //调用实例的render方法，获取返回值
     const children = instance.render();
     reconcileChildren(wip, children);
 }

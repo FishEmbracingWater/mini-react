@@ -28,7 +28,7 @@ export function createFiber(vnode, returnFiber) {
         flags: Placement, //当前fiber要进行的操作，二进制
         index: null, //记录节点在当前层级下的位置
         alternate: null, //存储旧的fiber对象,用于比较（涉及fiber 的双缓冲机制）
-        memorizedState: null, //函数组件存储的第一个hook0
+        memorizedState: null, //根据不同的数据类型，存储不同的hook，函数组件存储的第一个hook0
     };
 
     //实际上fiber 对象上还有一个tag值，用来标记当前fiber 的 type值

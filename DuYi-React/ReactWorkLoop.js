@@ -1,6 +1,7 @@
 import { scheduleCallback } from "./scheduler";
 import { Placement, Update, updateNode } from "./utils";
 import beginWork from "./ReactFiberBeginWork";
+import completeWork from "./ReactFiberCompleteWork";
 //work in progress 当前正在工作中的fiber
 //使用这个变量来保存当前正在工作的fiber
 let wip = null;
@@ -17,9 +18,11 @@ export function scheduleUpdateOnFiber(fiber) {
 
 /**
  * 找到每一帧的空闲时间，执行渲染
+ * @param {*} time 提交一个时间参数，如果超过了改时间，那么就不再处理下一个fiber
  *  */
-function workLoop(deadline) {
-    while (wip && deadline.timeRemaining() > 0) {
+function workLoop(time) {
+    while (wip) {
+        if (time < 0) return false
         //进入此循环、说明有需要进行处理的fiber节点，并且也有时间执行
         performUnitOfWork(); //该方法负责处理fiber节点
     }
@@ -75,19 +78,34 @@ function performUnitOfWork() {
 
 // requestIdleCallback(workLoop);
 
-//提交更新
+/*
+*执行该方法的时候，说明整个节点的协调工作已经完成
+*接下来就进入渲染阶段
+*/
 function commitRoot() {
     commitWorker(wipRoot);
+    //渲染完成后将wipRoot置为null
     wipRoot = null;
 }
 
+/**
+ * 
+ * @param {*} deletions 当前fiber 对象上面要删除的子fiber 数组
+ * @param {*} parentNode 当前fiber 对象所对应的真实dom，如果当前fiber 没有dom 对象，那么就需要找到它的父节点
+ */
 function commitDeletions(deletions, parentNode) {
     for (let index = 0; index < deletions.length; index++) {
+        //这里在进行删除的时候，需要删除fiber 所对应的stateNode
+        //如果没有stateNode，那么就需要往下一直找，找到对应的真实dom
         parentNode.removeChild(getStateNode(deletions[index]));
     }
 }
 
-//不是每个fiber都有dom节点，返回存在的stateNode
+/**
+ * 不是每个fiber都有dom节点，返回存在的stateNode
+ * @param {*} fiber 要删除的fiber
+ * @returns fiber所对应的dom节点
+ */
 function getStateNode(fiber) {
     let tem = fiber;
     while (!tem.stateNode) {
@@ -98,10 +116,13 @@ function getStateNode(fiber) {
 
 function commitWorker(wip) {
     if (!wip) return;
+    //整个commitWorker 里面的提交分成三步
     //1.提交自己
-    //parentNode是父fiber的stateNode
+    //首先获取该 fiber 所对应的父节点的dom对象
+    //parentNode是父fiber的stateNode（真实dom）
     const parentNode = getParentNode(wip.return); //wip.return.stateNode;
     const { flags, stateNode } = wip;
+    //更加不同的fiber做出不同的操作
     if (flags & Placement && stateNode) {
         //创建新节点
         const before = getHostSibling(wip.sibling);
@@ -109,7 +130,7 @@ function commitWorker(wip) {
         // parentNode.appendChild(stateNode);
     }
     if (wip.deletions) {
-        //删除wip的子节点
+        //说明有需要删除的节点
         commitDeletions(wip.deletions, stateNode || parentNode);
     }
 
@@ -119,6 +140,7 @@ function commitWorker(wip) {
     }
 
     if (wip.tag === FunctionComponent) {
+        //进入此if，说明当前fiber 对象的类型为函数类型
         invokeHooks(wip);
     }
 
@@ -133,6 +155,8 @@ function getParentNode(wip) {
     let tem = wip;
     while (tem) {
         if (tem.stateNode) return tem.stateNode;
+        //如果没有进入上面的if、说明当前节点没有对应的 Dom 节点
+        //那么就需要向上继续寻找
         tem = tem.return;
     }
 }
@@ -156,19 +180,34 @@ function insertOrAppendPlacementNode(stateNode, before, parentNode) {
     }
 }
 
+/**
+ * 取出该fiber 对象中的updateQueue 里的副作用，依次执行
+ * @param {*} wip 
+ */
 function invokeHooks(wip) {
     const { updateQueueOfEffect, updateQueueOfLayout } = wip;
-    console.log("invokeHooks", updateQueueOfEffect, updateQueueOfLayout);
+
+    //useLayoutEffect
     for (let index = 0; index < updateQueueOfLayout.length; index++) {
         const effect = updateQueueOfLayout[index];
-        effect.crate();
+        if (effect.destory) {
+            effect.destory();
+        }
+        effect.destory = effect.crate();
     }
 
+    //useEffect
     for (let index = 0; index < updateQueueOfEffect.length; index++) {
+        //取出每一个副作用，依次执行
         const effect = updateQueueOfEffect[index];
-
+        //检查是否有清除方法
+        if (effect.destory) {
+            effect.destory();
+        }
+        //接下来执行副作用函数
+        //这里不是直接执行，而是创建一个任务，放到任务队列
         scheduleCallback(() => {
-            effect.crate();
+            effect.destory = effect.crate();
         });
     }
 }

@@ -106,6 +106,13 @@ export function updateNode(node, prevVal, nextVal) {
         });
 }
 
+/**
+ * 比较两个依赖项是否相同
+ * 如果都相同返回true，否则返回false
+ * @param {*} nextDeps 新的依赖项数组
+ * @param {*} prevDeps 旧的依赖项数组
+ * @returns 
+ */
 export function areHookInputsEqual(nextDeps, prevDeps) {
     if (prevDeps == null) {
         return false;
@@ -115,6 +122,7 @@ export function areHookInputsEqual(nextDeps, prevDeps) {
         if (Object.is(nextDeps[i], prevDeps[i])) {
             continue;
         }
+        //只要有一项不相等，就返回false
         return false;
     }
 
